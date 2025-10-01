@@ -1,0 +1,565 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Harshita Pandita's Stellar Portfolio - UX Design and Software Engineering">
+    <title>Harshita Pandita's Stellar Portfolio</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Orbitron', sans-serif;
+            background-color: #000;
+            color: #fff;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+            box-sizing: border-box;
+        }
+        h1, h2 {
+            font-size: clamp(2em, 5vw, 2.5em);
+            margin: 0;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        .tagline {
+            font-size: clamp(1.5em, 4vw, 1.8em);
+            font-weight: 700;
+            margin: 20px auto;
+            max-width: 90%;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            0% { text-shadow: 0 0 10px #ffeb3b, 0 0 20px #ffeb3b; }
+            100% { text-shadow: 0 0 20px #ffca28, 0 0 30px #ffca28; }
+        }
+        p {
+            font-size: clamp(1em, 3vw, 1.1em);
+            max-width: 90%;
+            margin: 20px auto;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            font-size: clamp(0.9em, 2.5vw, 1em);
+            max-width: 90%;
+            margin: 20px auto;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards 0.5s;
+        }
+        ul li {
+            margin: 10px 0;
+        }
+        ul li a {
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        ul li a:hover {
+            color: #ffca28;
+        }
+        #nebula-cloud ul li a {
+            color: #ba68c8;
+            border-bottom: 1px solid transparent;
+            transition: color 0.3s ease, border-bottom 0.3s ease;
+        }
+        #nebula-cloud ul li a:hover {
+            color: #ffca28;
+            border-bottom: 1px solid #ffca28;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(20px); }
+        }
+        .star {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: clamp(100px, 20vw, 150px);
+            height: clamp(100px, 20vw, 150px);
+            border-radius: 50%;
+            animation: pulse 2s infinite alternate;
+            z-index: -1;
+        }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+        #main-sequence .star {
+            background: radial-gradient(circle, #fff8e1, #ffca28, #000);
+            box-shadow: 0 0 50px #ffeb3b;
+        }
+        #red-supergiant .star {
+            background: radial-gradient(circle, #ff8a80, #d32f2f, #000);
+            width: clamp(150px, 25vw, 200px);
+            height: clamp(150px, 25vw, 200px);
+            box-shadow: 0 0 100px #f44336;
+            animation: expand 3s infinite alternate;
+        }
+        @keyframes expand {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+        #supernova .star {
+            background: radial-gradient(circle, #bbdefb, #2196f3, #000);
+            box-shadow: 0 0 200px #64b5f6;
+            animation: explode 1s infinite;
+        }
+        @keyframes explode {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.5); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        #nebula-cloud .star {
+            background: radial-gradient(circle, #ce93d8, #ab47bc, #000);
+            box-shadow: 0 0 80px #ba68c8;
+            animation: swirl 4s infinite alternate;
+        }
+        @keyframes swirl {
+            0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) scale(1.1) rotate(10deg); }
+        }
+        #white-dwarf .star {
+            background: radial-gradient(circle, #b0bec5, #78909c, #000);
+            width: clamp(80px, 15vw, 120px);
+            height: clamp(80px, 15vw, 120px);
+            box-shadow: 0 0 40px #90a4ae;
+            animation: dim 2.5s infinite alternate;
+        }
+        @keyframes dim {
+            0% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        #pulsar .star {
+            background: radial-gradient(circle, #80deea, #26c6da, #000);
+            width: clamp(90px, 18vw, 130px);
+            height: clamp(90px, 18vw, 130px);
+            box-shadow: 0 0 60px #4dd0e1;
+            animation: spin 1.5s infinite;
+        }
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        #black-hole .star {
+            background: #000;
+            box-shadow: 0 0 50px #b0bec5, inset 0 0 100px #000;
+            animation: suck 2s infinite alternate;
+        }
+        @keyframes suck {
+            0% { box-shadow: 0 0 50px #b0bec5; }
+            100% { box-shadow: 0 0 20px #b0bec5; }
+        }
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.9), rgba(50, 50, 50, 0.7));
+            padding: 10px 20px;
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: clamp(10px, 2vw, 20px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        nav.active {
+            opacity: 1;
+            visibility: visible;
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: clamp(0.9em, 2vw, 1em);
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 5px 10px;
+        }
+        nav a:hover {
+            color: #ffca28;
+        }
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10px;
+            width: 0;
+            height: 2px;
+            background: #ffca28;
+            transition: width 0.3s ease;
+        }
+        nav a:hover::after {
+            width: calc(100% - 20px);
+        }
+        .menu-toggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 11;
+            cursor: pointer;
+            width: clamp(35px, 10vw, 45px);
+            height: clamp(35px, 10vw, 45px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            transition: background 0.3s ease;
+        }
+        .menu-toggle:hover {
+            background: rgba(50, 50, 50, 0.8);
+        }
+        .menu-toggle span {
+            width: clamp(20px, 6vw, 25px);
+            height: 3px;
+            background: #ffca28;
+            margin: 3px 0;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+        .menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+        .interactive {
+            cursor: pointer;
+            transition: transform 0.3s, color 0.3s;
+        }
+        .interactive:hover {
+            transform: scale(1.05);
+            color: #ffca28;
+        }
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+        }
+        .nebula {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent);
+            opacity: 0.3;
+            animation: drift 20s linear infinite;
+        }
+        @keyframes drift {
+            0% { background-position: 0 0; }
+            100% { background-position: 1000px 1000px; }
+        }
+        @media (max-width: 768px) {
+            section {
+                padding: 15px;
+            }
+            h1, h2 {
+                font-size: clamp(1.8em, 6vw, 2em);
+            }
+            .tagline {
+                font-size: clamp(1.2em, 5vw, 1.4em);
+            }
+            p {
+                font-size: clamp(0.9em, 4vw, 1em);
+            }
+            ul {
+                font-size: clamp(0.8em, 3.5vw, 0.9em);
+            }
+            #nebula-cloud ul li a {
+                font-size: clamp(0.7em, 3vw, 0.8em);
+            }
+            .star {
+                width: clamp(80px, 15vw, 100px);
+                height: clamp(80px, 15vw, 100px);
+            }
+            #red-supergiant .star {
+                width: clamp(120px, 20vw, 150px);
+                height: clamp(120px, 20vw, 150px);
+            }
+            #white-dwarf .star {
+                width: clamp(60px, 12vw, 80px);
+                height: clamp(60px, 12vw, 80px);
+            }
+            #pulsar .star {
+                width: clamp(70px, 14vw, 90px);
+                height: clamp(70px, 14vw, 90px);
+            }
+            nav {
+                padding: 8px 15px;
+                gap: clamp(8px, 1.5vw, 15px);
+            }
+            nav a {
+                font-size: clamp(0.8em, 2.5vw, 0.9em);
+                padding: 5px 8px;
+            }
+            .menu-toggle {
+                top: 8px;
+                left: 8px;
+                width: clamp(30px, 12vw, 40px);
+                height: clamp(30px, 12vw, 40px);
+            }
+            .menu-toggle span {
+                width: clamp(18px, 7vw, 22px);
+                height: 2px;
+                margin: 2px 0;
+            }
+        }
+        @media (max-width: 480px) {
+            section {
+                padding: 10px;
+            }
+            h1, h2 {
+                font-size: clamp(1.5em, 7vw, 1.8em);
+            }
+            .tagline {
+                font-size: clamp(1em, 5.5vw, 1.2em);
+            }
+            p {
+                font-size: clamp(0.8em, 4.5vw, 0.9em);
+            }
+            ul {
+                font-size: clamp(0.7em, 4vw, 0.8em);
+            }
+            #nebula-cloud ul li a {
+                font-size: clamp(0.6em, 3.5vw, 0.7em);
+            }
+            .star {
+                width: clamp(60px, 12vw, 80px);
+                height: clamp(60px, 12vw, 80px);
+            }
+            #red-supergiant .star {
+                width: clamp(100px, 18vw, 120px);
+                height: clamp(100px, 18vw, 120px);
+            }
+            #white-dwarf .star {
+                width: clamp(50px, 10vw, 60px);
+                height: clamp(50px, 10vw, 60px);
+            }
+            #pulsar .star {
+                width: clamp(60px, 12vw, 70px);
+                height: clamp(60px, 12vw, 70px);
+            }
+            nav {
+                padding: 6px 10px;
+                gap: clamp(5px, 1vw, 10px);
+            }
+            nav a {
+                font-size: clamp(0.7em, 3vw, 0.8em);
+                padding: 4px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="stars"></canvas>
+    <div class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    <nav id="nav-menu">
+        <a href="#main-sequence">The Birth of a Star</a>
+        <a href="#red-supergiant">Red Supergiant</a>
+        <a href="#supernova">Supernova</a>
+        <a href="#nebula-cloud">Nebula Cloud</a>
+        <a href="#white-dwarf">White Dwarf</a>
+        <a href="#pulsar">Pulsar</a>
+        <a href="#black-hole">Black Hole</a>
+    </nav>
+
+    <section id="main-sequence">
+        <div class="star"></div>
+        <div class="nebula"></div>
+        <h1>The Birth of a Star</h1>
+        <p class="interactive">I'm Harshita Pandita, a B.Tech Computer Science Engineering student at Kurukshetra University, captivated by the cosmos and code. Inspired by Stephen Hawking’s knack for unraveling the universe’s mysteries, I craft intuitive UX designs like navigating a starfield.</p>
+        <p class="tagline"><strong>Crafting Cosmic Experiences with Code and Curiosity</strong></p>
+    </section>
+
+    <section id="red-supergiant">
+        <div class="star"></div>
+        <div class="nebula"></div>
+        <h1>Red Supergiant: Expansion and Growth</h1>
+        <p class="interactive">As a Forage-certified UX designer, I excel in user-centered design, Figma prototyping, Python/Java programming, UX research, AI/ML exploration, and cosmology-driven problem-solving.</p>
+    </section>
+
+    <section id="supernova">
+        <div class="star"></div>
+        <div class="nebula"></div>
+        <h1>Supernova: Explosive Creativity</h1>
+        <p class="interactive">My projects shine brightly:</p>
+        <ul>
+            <li><strong>AI Path Finder</strong>: Python-based reinforcement learning for optimized navigation, designed with user-centered UX principles.</li>
+            <li><strong>ESPIRA: Space Trash Probe</strong>: UX research for a space debris probe, creating Figma interfaces to simplify complex data.</li>
+        </ul>
+    </section>
+
+    <section id="nebula-cloud">
+        <div class="star"></div>
+        <div class="nebula"></div>
+        <h1>Nebula Cloud: UX Teardowns</h1>
+        <p class="interactive">Like a nebula forming new stars, my UX teardown articles analyze and refine digital interfaces for clarity and usability.</p>
+        <ul>
+            <li><strong>The Wellness Trap: How Mental Health Apps Can Create the Problems They Promise to Solve</strong>: Unveiling UX dark patterns like a nebula exposing hidden stars. <a href="https://medium.com/@panditahershey/the-wellness-trap" target="_blank">Read Article</a></li>
+        </ul>
+    </section>
+
+    <section id="white-dwarf">
+        <div class="star"></div>
+        <div class="nebula"></div>
+        <h1>White Dwarf: Hobbies</h1>
+        <p class="interactive">I orbit between the cosmos and user experience, blending my passions with purpose. Stargazing ignites my curiosity, inspiring me to map user journeys with the clarity of constellations. Coding in Python and Java, I tackle problems like an astronaut navigating new terrain, applying logic to enhance UX flows. Reading about space tech and AI fuels my research mindset, while doodling user flows for projects like ESPIRA sharpens my Forage-learned UX skills, crafting experiences as intuitive as a starry night.</p>
+    </section>
+
+    <section id="pulsar">
+        <div class="star"></div>
+        <div class="nebula"></div>
+        <h1>Pulsar: Forage Certified</h1>
+        <p class="interactive">My certifications pulse with expertise, showcasing my skills in UX and software engineering.</p>
+        <ul>
+            <li><a href="https://www.theforage.com/certificates/walmart-usa-advanced-software-engineering-job-simulation" target="_blank">Walmart USA - Advanced Software Engineering Job Simulation</a></li>
+            <li><a href="https://www.theforage.com/certificates/lloyds-banking-group-ux-design-introduction-job-simulation" target="_blank">Lloyds Banking Group - UX Design Introduction Job Simulation</a></li>
+            <li><a href="https://www.theforage.com/certificates/bcg-strategic-and-experience-design-job-simulation" target="_blank">BCG - Strategic and Experience Design Job Simulation</a></li>
+        </ul>
+    </section>
+
+    <section id="black-hole">
+        <div class="star"></div>
+        <div class="nebula"></div>
+        <h1>Black Hole: Infinite Potential</h1>
+        <p class="interactive">Let’s create stellar digital experiences. Email: <a href="mailto:panditaharshita75@gmail.com">panditaharshita75@gmail.com</a> | LinkedIn: <a href="https://www.linkedin.com/in/harshita-pandita-4b277218b/" target="_blank">My Profile</a></p>
+    </section>
+
+    <script>
+        const canvas = document.getElementById('stars');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const stars = [];
+        for (let i = 0; i < 200; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2,
+                opacity: Math.random() * 0.5 + 0.5,
+                speed: Math.random() * 0.02 + 0.01
+            });
+        }
+
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                ctx.fill();
+                star.opacity += star.speed;
+                if (star.opacity > 1 || star.opacity < 0.5) star.speed = -star.speed;
+            });
+            requestAnimationFrame(drawStars);
+        }
+        drawStars();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars.forEach(star => {
+                star.x = Math.random() * canvas.width;
+                star.y = Math.random() * canvas.height;
+            });
+        });
+
+        document.querySelectorAll('.interactive').forEach(el => {
+            el.addEventListener('click', () => {
+                alert('Interactive element clicked! Add your custom action here, like linking to a project demo or contact form.');
+            });
+        });
+
+        const menuToggle = document.getElementById('menu-toggle');
+        const navMenu = document.getElementById('nav-menu');
+
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+
+        document.querySelectorAll('#nav-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                menuToggle.classList.remove('active');
+                navMenu.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>
